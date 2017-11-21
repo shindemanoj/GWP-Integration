@@ -19,7 +19,7 @@ public class GWPSampleInfo extends GWPConnector{
 	 */
 	public static void main(String [] args){
 		GWPSampleInfo connector = new GWPSampleInfo();
-		boolean result = connector.getSample("VENOUS", "PID-2348", "2017-11-17 15:59:00", "gemtestpc1");
+		boolean result = connector.verifySample("gemtestpc1", "PID-2348", "mixed venous", "2017-11-17 15:59:00");
 		if(result){
 			System.out.println("Got it");
 		}
@@ -34,7 +34,7 @@ public class GWPSampleInfo extends GWPConnector{
 	 * @param analyzerName
 	 * @return true or false
 	 */
-	public boolean getSample(String sampleType, String patientId, String sampleAnalyzedTime, String analyzerName) {
+	public boolean verifySample(String analyzerName, String patientId, String sampleType, String sampleAnalyzedTime) {
 		// Initialize variables
 		String baseUrl = GWP_IP + "api/samples?sampleNumber=*&operatorId=*&clinician=*&orderNumber=*&limit=50&offset=0";
 		System.out.println("\nLogin - Send Http POST request");
@@ -51,7 +51,7 @@ public class GWPSampleInfo extends GWPConnector{
 			SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
 	
 			// Create url to get sample data with given arguments
-			String sampleURL = baseUrl + "&patientId="+patientId+"&sourceCode=" + sampleType.toUpperCase() + "&dateFrom="+
+			String sampleURL = baseUrl + "&patientId="+patientId+"&sourceCode=" + sampleType.replaceAll(" ", "_").toUpperCase() + "&dateFrom="+
 					dateFormat.format(new Date(System.currentTimeMillis()-3600*1000*2))+"&dateTo="+dateFormat.format(new Date()) 
 					+"&timestamp="+dateFormat.format(timestamp) + "&analyzerId=" + analyzerId;
 			
@@ -67,7 +67,7 @@ public class GWPSampleInfo extends GWPConnector{
 			JSONArray sampleArray  = new JSONArray(EntityUtils.toString(samples.getEntity()));
 			for (int i = 0; i < sampleArray.length(); i++) {
 				JSONObject sample = sampleArray.getJSONObject(i);
-				if(sample.get("analyzerName").equals(analyzerName + "-1") && sample.get("sampleSourceName").toString().equalsIgnoreCase(sampleType) && 
+				if(sample.getString("analyzerName").equals(analyzerName + "-1") && sample.getString("sampleSourceName").equalsIgnoreCase(sampleType) && 
 						sample.getString("patientId").equals(patientId)){
 					return true;
 				}
@@ -84,18 +84,18 @@ public class GWPSampleInfo extends GWPConnector{
 	}
 	
 	/**
-	 * Name: getSample
+	 * Name: checkLastThreeSamples
 	 * Description: Login to GWP Server and check if sample exists for matching parameters
 	 * @param sampleType
 	 * @param patientId
-	 * @param sampleAnalyzedTime
 	 * @param analyzerName
 	 * @return true or false
 	 */
-	public boolean getSampleByOperatorId(String sampleType, String patientId, String sampleAnalyzedTime, String analyzerName) {
+	public boolean verifyLastThreeSamples(String analyzerName, String patientId, String sampleType, String sampleStatus) {
 		// Initialize variables
 		String baseUrl = GWP_IP + "api/samples?sampleNumber=*&operatorId=*&clinician=*&orderNumber=*&limit=50&offset=0";
 		System.out.println("\nLogin - Send Http POST request");
+		boolean result = false;
 		
 		try {
 			// Call login method
@@ -105,13 +105,12 @@ public class GWPSampleInfo extends GWPConnector{
 			System.out.println("Analyzer ID:" + analyzerId);
 			
 			// Generate timestamp using input parameter
-			Date timestamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(sampleAnalyzedTime);
 			SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
 	
 			// Create url to get sample data with given arguments
-			String sampleURL = baseUrl + "&patientId="+patientId+"&sourceCode=" + sampleType.toUpperCase() + "&dateFrom="+
+			String sampleURL = baseUrl + "&patientId="+patientId+"&sourceCode=" + sampleType.replaceAll(" ", "_").toUpperCase() + "&dateFrom="+
 					dateFormat.format(new Date(System.currentTimeMillis()-3600*1000*2))+"&dateTo="+dateFormat.format(new Date()) 
-					+"&timestamp="+dateFormat.format(timestamp) + "&analyzerId=" + analyzerId;
+					+"&timestamp="+dateFormat.format(new Date()) + "&analyzerId=" + analyzerId + "&sampleStatus=" + sampleStatus.replaceAll(" ", "_").toUpperCase();
 			
 			// Send GET request to get samples
 			HttpGet request = new HttpGet(sampleURL);
@@ -122,22 +121,24 @@ public class GWPSampleInfo extends GWPConnector{
 			System.out.println("Response Code : " +
 					samples.getStatusLine().getStatusCode());
 			
-			JSONArray sampleArray  = new JSONArray(EntityUtils.toString(samples.getEntity()));
-			for (int i = 0; i < sampleArray.length(); i++) {
-				JSONObject sample = sampleArray.getJSONObject(i);
-				if(sample.get("analyzerName").equals(analyzerName + "-1") && sample.get("sampleSourceName").toString().equalsIgnoreCase(sampleType) && 
-						sample.getString("patientId").equals(patientId)){
-					return true;
+			JSONArray samplesArray  = new JSONArray(EntityUtils.toString(samples.getEntity()));
+			int count = 0;
+			for (int i = 0; i < samplesArray.length(); i++) {
+				JSONObject sample = samplesArray.getJSONObject(i);
+				if(sample.getString("analyzerName").equals(analyzerName + "-1") && sample.getString("sampleSourceName").equalsIgnoreCase(sampleType) && 
+						sample.getString("patientId").equals(patientId) && sample.getString("sampleStatus").equals(sampleStatus.replaceAll(" ", "_").toUpperCase())){
+					count++;
 				}
 			}
-			System.out.println(sampleArray);
-			
+			System.out.println(samplesArray);
+			if(count == 3)	
+				result = true;
 			logout(client);
 		}
 		catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}		
-		return false;
+		return result;
 	}
 }
