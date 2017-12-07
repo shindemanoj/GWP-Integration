@@ -28,10 +28,10 @@ public class GWPSampleInfo extends GWPConnector{
 	/**
 	 * Name: getSample
 	 * Description: Login to GWP Server and check if sample exists for matching parameters
-	 * @param sampleType
-	 * @param patientId
-	 * @param sampleAnalyzedTime
 	 * @param analyzerName
+	 * @param patientId
+	 * @param sampleType
+	 * @param sampleAnalyzedTime
 	 * @return true or false
 	 */
 	public boolean verifySample(String analyzerName, String patientId, String sampleType, String sampleAnalyzedTime) {
@@ -86,9 +86,10 @@ public class GWPSampleInfo extends GWPConnector{
 	/**
 	 * Name: checkLastThreeSamples
 	 * Description: Login to GWP Server and check if sample exists for matching parameters
-	 * @param sampleType
-	 * @param patientId
 	 * @param analyzerName
+	 * @param patientId
+	 * @param sampleType
+	 * @param sampleStatus
 	 * @return true or false
 	 */
 	public boolean verifyLastThreeSamples(String analyzerName, String patientId, String sampleType, String sampleStatus) {
