@@ -1,8 +1,11 @@
 package GWP;
 
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
@@ -23,14 +26,52 @@ import org.json.JSONObject;
 
 @SuppressWarnings("deprecation")
 public abstract class GWPConnector {
-	public static final String LOGIN_URL = "https://192.168.237.241/api/login";
-	public static final String LOGOUT_URL = "https://192.168.237.241/api/logout";
-	public static final String GET_SAMPLE_URL = "https://192.168.237.241/api/samples?sampleNumber=*&operatorId=*&clinician=*&orderNumber=*&limit=50&offset=0";
-	public static final String USERNAME = "supervisor";
-	public static final String ENCODED_PASSWORD = "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92";
-	public static final String GET_DATE_TIME_URl = "https://192.168.237.241/api/global/datetime";
-	public static final String GET_SAMPLE_COUNT_URL = "https://192.168.237.241/api/samples/count?sampleNumber=*&operatorId=*&clinician=*&orderNumber=*&limit=50&offset=0";
-	public static final String GWP_IP = "https://192.168.237.241/";
+	protected static String GWP_IP;
+	protected static String LOGIN_URL;
+	protected static String LOGOUT_URL;
+	protected static String GET_SAMPLE_URL;
+	protected static String USERNAME;
+	protected static String ENCODED_PASSWORD;
+	protected static String GET_DATE_TIME_URl;
+	protected static String GET_SAMPLE_COUNT_URL;
+	
+	protected GWPConnector() {
+		Properties prop = new Properties();
+		InputStream input = null;
+
+		try {
+
+			input = new FileInputStream("config.properties");
+
+			// load a properties file
+			prop.load(input);
+
+			// get the property value and print it out
+			System.out.println(prop.getProperty("gwp_ip"));
+			System.out.println(prop.getProperty("username"));
+			System.out.println(prop.getProperty("encoded_pwd"));
+			
+			GWP_IP = "https://" + prop.getProperty("gwp_ip") + "/";
+			LOGIN_URL = GWP_IP + "api/login";
+			LOGOUT_URL = GWP_IP + "api/logout";
+			GET_SAMPLE_URL = GWP_IP + "api/samples?sampleNumber=*&operatorId=*&clinician=*&orderNumber=*&limit=50&offset=0";
+			USERNAME = prop.getProperty("username");
+			ENCODED_PASSWORD = prop.getProperty("encoded_pwd");
+			GET_DATE_TIME_URl = GWP_IP + "api/global/datetime";
+			GET_SAMPLE_COUNT_URL = GWP_IP + "api/samples/count?sampleNumber=*&operatorId=*&clinician=*&orderNumber=*&limit=50&offset=0";
+			
+		} catch (IOException ex) {
+			ex.printStackTrace();
+		} finally {
+			if (input != null) {
+				try {
+					input.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+	}
 	
 	/**
 	 * Name: login
@@ -45,7 +86,6 @@ public abstract class GWPConnector {
 			        .setSSLSocketFactory(new SSLConnectionSocketFactory(SSLContexts.custom()
 			                .loadTrustMaterial(null, new TrustSelfSignedStrategy())
 			                .build())).build();
-		System.out.println("\nGet Sample Data - Send Http GET request");
 		
 		// Create httpPost object to send post request
 		String loginURL = GWP_IP + "api/login";
@@ -98,7 +138,7 @@ public abstract class GWPConnector {
 	 * @throws IOException 
 	 * @throws ClientProtocolException 
 	 */
-	public void logout(CloseableHttpClient client) throws Exception{
+	protected void logout(CloseableHttpClient client) throws Exception{
 		
 		// Send GET request to get samples
 		String logoutUrl = GWP_IP + "api/logout";

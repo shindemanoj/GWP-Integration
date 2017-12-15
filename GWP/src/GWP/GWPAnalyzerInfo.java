@@ -9,14 +9,14 @@ import org.apache.http.util.EntityUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-public class GWPGetAnalyzerInfo extends GWPConnector {
+public class GWPAnalyzerInfo extends GWPConnector {
 	/**
 	 * Name: main
 	 * Description: Call checkAnalyzerConnected
 	 * @param args
 	 */
 	public static void main(String [] args){
-		GWPGetAnalyzerInfo connector = new GWPGetAnalyzerInfo();
+		GWPAnalyzerInfo connector = new GWPAnalyzerInfo();
 		boolean result = connector.verifyAnalyteStatus("gemtestpc8", "tbili", "APV/Amp. Due");
 		if(result){
 			System.out.println("Got it");
@@ -29,7 +29,7 @@ public class GWPGetAnalyzerInfo extends GWPConnector {
 	 * @param analyzerName
 	 * @return true or false
 	 */
-	public boolean verifyAnalyzerConnected(String analyzerName) {
+	protected boolean verifyAnalyzerConnected(String analyzerName) {
 		boolean result = false;
 		String getAnalyzerStatusUrl = GWP_IP + "api/analyzers/";
 		
@@ -67,7 +67,7 @@ public class GWPGetAnalyzerInfo extends GWPConnector {
 	 * @param analyzerName
 	 * @return true or false
 	 */
-	public boolean verifyAnalytesWithoutCartridge(String analyzerName) {
+	protected boolean verifyAnalytesWithoutCartridge(String analyzerName) {
 		boolean result = false;
 		String getAnalyzerStatusUrl = GWP_IP + "api/analyzers/";
 		
@@ -109,7 +109,7 @@ public class GWPGetAnalyzerInfo extends GWPConnector {
 	 * @param analytesList
 	 * @return
 	 */
-	public boolean verifyAnalytesWithCartridge(String analyzerName, List<String> analytesList) {
+	protected boolean verifyAnalytesWithCartridge(String analyzerName, List<String> analytesList) {
 		boolean result = false;
 		String getAnalyzerStatusUrl = GWP_IP + "api/analyzers/";
 		
@@ -157,7 +157,7 @@ public class GWPGetAnalyzerInfo extends GWPConnector {
 	 * @param analyzerName
 	 * @return true or false
 	 */
-	public boolean verifyStatusWithCartridge(String analyzerName) {
+	protected boolean verifyStatusWithCartridge(String analyzerName) {
 		boolean result = false;
 		String getAnalyzerStatusUrl = GWP_IP + "api/analyzers/";
 		
@@ -200,7 +200,7 @@ public class GWPGetAnalyzerInfo extends GWPConnector {
 	 * @param days
 	 * @return true or false
 	 */
-	public boolean verifyTestsAndDaysWithCartridge(String analyzerName, int tests, int days) {
+	protected boolean verifyTestsAndDaysWithCartridge(String analyzerName, int tests, int days) {
 		boolean result = false;
 		String getAnalyzerStatusUrl = GWP_IP + "api/analyzers/";
 		
@@ -242,7 +242,7 @@ public class GWPGetAnalyzerInfo extends GWPConnector {
 	 * @param analyzerName
 	 * @return
 	 */
-	public boolean verifyCVPDueStatus(String analyzerName) {
+	protected boolean verifyCVPDueStatus(String analyzerName) {
 		boolean result = false;
 		String getAnalyzerStatusUrl = GWP_IP + "api/analyzers/";
 		
@@ -284,7 +284,7 @@ public class GWPGetAnalyzerInfo extends GWPConnector {
 	 * @param instrumentStatus
 	 * @return
 	 */
-	public boolean verifyAnalyzerStatusBar(String analyzerName, String instrumentStatus) {
+	protected boolean verifyAnalyzerStatusBar(String analyzerName, String instrumentStatus) {
 		boolean result = false;
 		String getAnalyzerStatusUrl = GWP_IP + "api/analyzers/";
 		
@@ -327,7 +327,7 @@ public class GWPGetAnalyzerInfo extends GWPConnector {
 	 * @param status
 	 * @return
 	 */
-	public boolean verifyAnalyteStatus(String analyzerName, String analyte, String status) {
+	protected boolean verifyAnalyteStatus(String analyzerName, String analyte, String status) {
 		boolean result = false;
 		String getAnalyzerStatusUrl = GWP_IP + "api/analyzers/";
 		

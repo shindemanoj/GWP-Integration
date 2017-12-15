@@ -10,15 +10,15 @@ import org.apache.http.util.EntityUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-public class GWPGetConfigInfo extends GWPConnector {
+public class GWPConfigInfo extends GWPConnector {
 	/**
 	 * Name: main
 	 * Description: Call checkAnalyzerConnected
 	 * @param args
 	 */
 	public static void main(String [] args){
-		GWPGetConfigInfo connector = new GWPGetConfigInfo();
-		boolean result = connector.verifyOtherMaterialSetup("1503", "GEM System Evaluator 1", "GEM5000");
+		GWPConfigInfo connector = new GWPConfigInfo();
+		boolean result = connector.verifyGlobalInterfaceSetup("HL7client", "TCP/IP", "ORI (HL7 v2.4)", "Always", true);
 		if(result){
 			System.out.println("Got it");
 		}
@@ -32,7 +32,7 @@ public class GWPGetConfigInfo extends GWPConnector {
 	 * @param enabled
 	 * @return true or false
 	 */
-	public boolean verifyParametersSetup(String analyzerName, String parameter, boolean enabled) {
+	protected boolean verifyParametersSetup(String analyzerName, String parameter, boolean enabled) {
 		boolean result = false;
 		String getParametersSetupUrl = GWP_IP + "api/analyzers/";
 		
@@ -80,7 +80,7 @@ public class GWPGetConfigInfo extends GWPConnector {
 	 * @param offset
 	 * @return true or false
 	 */
-	public boolean verifyCorrelationFactors(String analyzerName, String parameter, double slope, double offset) {
+	protected boolean verifyCorrelationFactors(String analyzerName, String parameter, double slope, double offset) {
 		boolean result = false;
 		String getParametersSetupUrl = GWP_IP + "api/analyzers/";
 		
@@ -128,7 +128,7 @@ public class GWPGetConfigInfo extends GWPConnector {
 	 * @param retractProbeTimeout
 	 * @return true or false
 	 */
-	public boolean verifySampleRemovalConfirmation(String analyzerName, boolean confirmSampleRemoval, int retractProbeTimeout) {
+	protected boolean verifySampleRemovalConfirmation(String analyzerName, boolean confirmSampleRemoval, int retractProbeTimeout) {
 		boolean result = false;
 		String getParametersSetupUrl = GWP_IP + "api/analyzers/";
 		
@@ -169,7 +169,7 @@ public class GWPGetConfigInfo extends GWPConnector {
 	 * @param touchKeySound
 	 * @return true or false
 	 */
-	public boolean verifySoundVolume(String analyzerName, String touchKeySound) {
+	protected boolean verifySoundVolume(String analyzerName, String touchKeySound) {
 		boolean result = false;
 		String getAnalyzerConfigUrl = GWP_IP + "api/analyzers/";
 		
@@ -209,7 +209,7 @@ public class GWPGetConfigInfo extends GWPConnector {
 	 * @param useExternalKeyboard
 	 * @return
 	 */
-	public boolean verifyExternalKeyboard(String analyzerName, boolean useExternalKeyboard) {
+	protected boolean verifyExternalKeyboard(String analyzerName, boolean useExternalKeyboard) {
 		boolean result = false;
 		String getAnalyzerConfigUrl = GWP_IP + "api/analyzers/";
 		
@@ -249,7 +249,7 @@ public class GWPGetConfigInfo extends GWPConnector {
 	 * @param time
 	 * @return true or false
 	 */
-	public boolean verifyIQMProcessCTime(String analyzerName, String time) {
+	protected boolean verifyIQMProcessCTime(String analyzerName, String time) {
 		boolean result = false;
 		String getAnalyzerConfigUrl = GWP_IP + "api/analyzers/";
 		
@@ -294,7 +294,7 @@ public class GWPGetConfigInfo extends GWPConnector {
 	 * @param defaultClinician
 	 * @return true or false
 	 */
-	public boolean verifyDefaultClinician(String analyzerName, boolean defaultClinician) {
+	protected boolean verifyDefaultClinician(String analyzerName, boolean defaultClinician) {
 		boolean result = false;
 		String getAnalyzerConfigUrl = GWP_IP + "api/analyzers/";
 		
@@ -334,7 +334,7 @@ public class GWPGetConfigInfo extends GWPConnector {
 	 * @param defaultPatientID
 	 * @return true or false
 	 */
-	public boolean verifyDefaultPatientID(String analyzerName, boolean defaultPatientID) {
+	protected boolean verifyDefaultPatientID(String analyzerName, boolean defaultPatientID) {
 		boolean result = false;
 		String getAnalyzerConfigUrl = GWP_IP + "api/analyzers/";
 		
@@ -374,7 +374,7 @@ public class GWPGetConfigInfo extends GWPConnector {
 	 * @param defaultOperatorID
 	 * @return true or false
 	 */
-	public boolean verifyDefaultOperatorID(String analyzerName, boolean defaultOperatorID) {
+	protected boolean verifyDefaultOperatorID(String analyzerName, boolean defaultOperatorID) {
 		boolean result = false;
 		String getAnalyzerConfigUrl = GWP_IP + "api/analyzers/";
 		
@@ -407,6 +407,102 @@ public class GWPGetConfigInfo extends GWPConnector {
 		return result;
 	}
 	
+	
+	/**
+	 * Name: verifyGlobalInterfaceSetup
+	 * Description: Verify Global Interface Setup in GWP
+	 * @param lOTNumber
+	 * @param lotDesc
+	 * @param model
+	 * @return true or false
+	 */
+	protected boolean verifyGlobalInterfaceSetup(String connectionName,  String connectionType, String highLevelProtocol, String postResults, boolean recieveOrders) {
+		boolean result = false;
+		String getAnalyzerConfigUrl = GWP_IP + "api/ecm";
+		
+		try {
+			// Call login method
+			CloseableHttpClient client = login();
+			
+			// Send GET request to get analyzer status
+			HttpGet request = new HttpGet(getAnalyzerConfigUrl);
+			HttpResponse response = client.execute(request);
+	
+			System.out.println("\nSending 'GET' request to URL : " + getAnalyzerConfigUrl);
+			System.out.println("Response Code : " +
+					response.getStatusLine().getStatusCode());
+			
+			JSONArray globalInterfaceInfoArray = new JSONArray(EntityUtils.toString(response.getEntity()));
+			for (int i = 0; i < globalInterfaceInfoArray.length(); i++) {
+				JSONObject globalObj = globalInterfaceInfoArray.getJSONObject(i);
+				if(globalObj.getString("name").equalsIgnoreCase(connectionName) && globalObj.getString("type").equalsIgnoreCase(connectionType.replace("/", "_"))
+						&& highLevelProtocol.contains(globalObj.getString("highLevelProtocol")) 
+						&& globalObj.getString("postResults").equalsIgnoreCase(postResults)
+						&& globalObj.getBoolean("recieveOrders") == recieveOrders){
+					result = true;
+				}
+			}
+			
+			logout(client);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return result;
+	}
+	
+	/**
+	 * Name: verifyLocalInterfaceSetup
+	 * Description: Verify Local Interface Setup in GWP
+	 * @param analyzerName
+	 * @param connectionName
+	 * @param connectionType
+	 * @param highLevelProtocol
+	 * @param sendPatientResults
+	 * @param sendIQMProcessData
+	 * @param sendQualityReports
+	 * @param sendGEMEvaulatorResults
+	 * @return true or false
+	 */
+	protected boolean verifyLocalInterfaceSetup(String analyzerName, String connectionName,  String connectionType, String highLevelProtocol, boolean sendPatientResults, boolean sendIQMProcessData, boolean sendQualityReports, boolean sendGEMEvaulatorResults) {
+		boolean result = false;
+		String getAnalyzerConfigUrl = GWP_IP + "api/analyzers/";
+		
+		try {
+			// Call login method
+			CloseableHttpClient client = login();
+			
+			String analyzerId = getAnalyzerId(client, analyzerName);
+			System.out.println("Analyzer ID:" + analyzerId);
+			getAnalyzerConfigUrl = getAnalyzerConfigUrl + analyzerId + "/ecm";
+			
+			// Send GET request to get analyzer status
+			HttpGet request = new HttpGet(getAnalyzerConfigUrl);
+			HttpResponse response = client.execute(request);
+	
+			System.out.println("\nSending 'GET' request to URL : " + getAnalyzerConfigUrl);
+			System.out.println("Response Code : " +
+					response.getStatusLine().getStatusCode());
+			
+			JSONArray globalInterfaceInfoArray = new JSONArray(EntityUtils.toString(response.getEntity()));
+			for (int i = 0; i < globalInterfaceInfoArray.length(); i++) {
+				JSONObject globalObj = globalInterfaceInfoArray.getJSONObject(i);
+				if(globalObj.getString("name").equalsIgnoreCase(connectionName) && globalObj.getString("type").equalsIgnoreCase(connectionType.replace("/", "_"))
+						&& highLevelProtocol.contains(globalObj.getString("highLevelProtocol")) 
+						&& globalObj.getBoolean("postPatientResults") == sendPatientResults && globalObj.getBoolean("postIQMData") == sendIQMProcessData
+						&& globalObj.getBoolean("postQualityReports") == sendQualityReports && globalObj.getBoolean("postGEMEvaluatorResults") == sendGEMEvaulatorResults){
+					result = true;
+				}
+			}
+			
+			logout(client);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return result;
+	}
+	
 	/**
 	 * Name: verifyCVPMaterialSetup
 	 * Description: Verify CVP Material Setup in GWP using LOT number, desc and model
@@ -415,7 +511,7 @@ public class GWPGetConfigInfo extends GWPConnector {
 	 * @param model
 	 * @return true or false
 	 */
-	public boolean verifyCVPMaterialSetup(String lOTNumber,  String lotDesc, String model) {
+	protected boolean verifyCVPMaterialSetup(String lOTNumber,  String lotDesc, String model) {
 		boolean result = false;
 		String getAnalyzerConfigUrl = GWP_IP + "api/qc_lot/CVP";
 		
@@ -456,7 +552,7 @@ public class GWPGetConfigInfo extends GWPConnector {
 	 * @param model
 	 * @return true or false
 	 */
-	public boolean verifyOtherMaterialSetup(String lOTNumber,  String lotDesc, String model) {
+	protected boolean verifyOtherMaterialSetup(String lOTNumber,  String lotDesc, String model) {
 		boolean result = false;
 		String getAnalyzerConfigUrl = GWP_IP + "api/qc_lot/GEM_EVALUATOR";
 		

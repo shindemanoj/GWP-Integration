@@ -19,9 +19,9 @@ public class GWPSampleInfo extends GWPConnector{
 	 */
 	public static void main(String [] args){
 		GWPSampleInfo connector = new GWPSampleInfo();
-		boolean result = connector.verifySample("gemtestpc1", "PID-2348", "mixed venous", "2017-11-17 15:59:00");
+		boolean result = connector.verifySample("gemtestpc2", "PID-8543", "ARTERIAL", "2017-12-12 15:59:00");
 		if(result){
-			System.out.println("Got it");
+			System.out.println("Sample found on GWP Server with matching parameters.");
 		}
 	}
 	
@@ -34,8 +34,9 @@ public class GWPSampleInfo extends GWPConnector{
 	 * @param sampleAnalyzedTime
 	 * @return true or false
 	 */
-	public boolean verifySample(String analyzerName, String patientId, String sampleType, String sampleAnalyzedTime) {
+	protected boolean verifySample(String analyzerName, String patientId, String sampleType, String sampleAnalyzedTime) {
 		// Initialize variables
+		boolean result = false;
 		String baseUrl = GWP_IP + "api/samples?sampleNumber=*&operatorId=*&clinician=*&orderNumber=*&limit=50&offset=0";
 		System.out.println("\nLogin - Send Http POST request");
 		
@@ -59,9 +60,10 @@ public class GWPSampleInfo extends GWPConnector{
 			HttpGet request = new HttpGet(sampleURL);
 	
 			HttpResponse samples = client.execute(request);
-	
-			System.out.println("\nSending 'GET' request to URL : " + sampleURL);
-			System.out.println("Response Code : " +
+			
+			System.out.println("\nGet Sample Data - Send Http GET request");
+			System.out.println("\nSending 'GET' request to URL: " + sampleURL);
+			System.out.println("Response Code: " +
 					samples.getStatusLine().getStatusCode());
 			
 			JSONArray sampleArray  = new JSONArray(EntityUtils.toString(samples.getEntity()));
@@ -69,7 +71,8 @@ public class GWPSampleInfo extends GWPConnector{
 				JSONObject sample = sampleArray.getJSONObject(i);
 				if(sample.getString("analyzerName").equals(analyzerName + "-1") && sample.getString("sampleSourceName").equalsIgnoreCase(sampleType) && 
 						sample.getString("patientId").equals(patientId)){
-					return true;
+					result = true;
+					break;
 				}
 			}
 			System.out.println(sampleArray);
@@ -80,7 +83,7 @@ public class GWPSampleInfo extends GWPConnector{
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}		
-		return false;
+		return result;
 	}
 	
 	/**
@@ -92,7 +95,7 @@ public class GWPSampleInfo extends GWPConnector{
 	 * @param sampleStatus
 	 * @return true or false
 	 */
-	public boolean verifyLastThreeSamples(String analyzerName, String patientId, String sampleType, String sampleStatus) {
+	protected boolean verifyLastThreeSamples(String analyzerName, String patientId, String sampleType, String sampleStatus) {
 		// Initialize variables
 		String baseUrl = GWP_IP + "api/samples?sampleNumber=*&operatorId=*&clinician=*&orderNumber=*&limit=50&offset=0";
 		System.out.println("\nLogin - Send Http POST request");
